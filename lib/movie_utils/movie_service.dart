@@ -14,25 +14,23 @@ class MovieService {
 
   Future<Result> init() async {
     final DateTime? lastUpdated = _box.get("lastUpdated");
-    final int timeBetween = DateTime.now().difference(lastUpdated ?? DateTime.now()).inHours;
+    final int timeBetween =
+        DateTime.now().difference(lastUpdated ?? DateTime.now()).inHours;
 
     if (lastUpdated == null || timeBetween > 24) {
       return refresh();
     }
 
-    final Map<String, dynamic> nextMovie = {};
-    for (var element in _box.get("nextMovie").entries) {
-      nextMovie[element.key.toString()] = element.value;
-    }
-
-    final Map<String, dynamic> upcomingMovie = {};
-    for (var element in _box.get("upcomingMovie").entries) {
-      upcomingMovie[element.key.toString()] = element.value;
-    }
+    final Map<String, dynamic> nextMovie = Map.castFrom(_box.get("nextMovie"));
+    final Map<String, dynamic> upcomingMovie =
+        Map.castFrom(_box.get("upcomingMovie"));
 
     return Success(
       movie: (_box.get("nextMovieImage"), Movie.fromJson(nextMovie)),
-      upcomingMovie: (_box.get("upcomingMovieImage"), Movie.fromJson(upcomingMovie)),
+      upcomingMovie: (
+        _box.get("upcomingMovieImage"),
+        Movie.fromJson(upcomingMovie)
+      ),
     );
   }
 
@@ -40,7 +38,8 @@ class MovieService {
     try {
       final (Movie, Movie) movies = await _getMovies();
       final Uint8List movieImage = await _getMovieImage(movies.$1.poster);
-      final Uint8List upComingMovieImage = await _getMovieImage(movies.$2.poster);
+      final Uint8List upComingMovieImage =
+          await _getMovieImage(movies.$2.poster);
 
       _box.put("lastUpdated", DateTime.now());
       _box.put("nextMovie", movies.$1.toMap());
